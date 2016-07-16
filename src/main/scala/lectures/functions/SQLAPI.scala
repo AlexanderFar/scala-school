@@ -26,23 +26,26 @@ object SQLAPI extends App {
 
     private val result = "SQL has been executed. Congrats!"
 
-    def open(): Connection = this.copy(opened = true)
+    def open(): Connection = { println("open connection"); this.copy(opened = true)}
 
     def execute(sql: String): String = if(opened) result else throw new Exception("You have to open connection before execute")
 
   }
 
-  private def logParameter[T](prm: T): T  = ???
+  private def logParamter[T](prm: T): T ={ println(prm); prm}
 
   val connection = (resource: String) => Connection(resource)
 
-  def execute(resource: String, sql: String): String = ???
+  def execute(resource: String, sql: String): String =
+    ((logParamter[String] _ andThen connection andThen logParamter andThen openConnection )(resource)  andThen logParamter) (sql)
+
 
 
   def openConnection(connection: Connection): (String) => String =
     (sql: String) => {
       connection.open execute sql
-  }
+    }
 
   execute("some DB", "some SQL")
+
 }

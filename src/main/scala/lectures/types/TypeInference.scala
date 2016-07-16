@@ -11,7 +11,7 @@ object TypeInference extends App {
 
   def calculateSomething() = 1 + 1
 
-  def result = printSomething + 3 + calculateSomething
+  def result = printSomething + (3 + calculateSomething)
 
   print(result)
 
