@@ -14,10 +14,10 @@ import scala.annotation.tailrec
 object Fibonacci extends App {
 
   // Task 2
-  def fibs (num: Int):Int = {
-    if (num == 1) return 1
-    if (num == 2) return 1
-    return  fibs(num - 1) + fibs(num - 2)
+  def fibs(num: Int): Int = {
+    if (num == 1) 1
+    else if (num == 2) 1
+    else fibs(num - 1) + fibs(num - 2)
   }
 
   println(fibs(9))
@@ -36,14 +36,23 @@ object Fibonacci extends App {
   */
 object Fibonacci2 extends App {
 
+  private val startAcc = Array(1, 1, 2, 3, 5, 8, 13)
+  //    private val startAcc = Array(1, 1, 2)
+  private val startAccLength = startAcc.length
+
   def fibs2(num: Int) =
-    if (num <= 3) Array(1, 1, 2)(num-1)
-    else fibsImpl(num, Array(1, 1, 2))(num-1)
+    if (num <= startAccLength)
+      startAcc(num - 1)
+    else
+      fibsImpl(num, startAcc)(num - 1)
 
   @tailrec private def fibsImpl(num: Int, acc: Array[Int]): Array[Int] = {
-    if(num <= 3) return acc;
-    val l = acc.length-1;
-    return  fibsImpl(num-1, acc :+ (acc(l)+acc(l-1))) ;
+    if (num <= startAccLength)
+      acc
+    else {
+      val l = acc.length;
+      fibsImpl(num - 1, acc :+ (acc(l - 1) + acc(l - 2)))
+    }
   }
 
   println(fibs2(9))

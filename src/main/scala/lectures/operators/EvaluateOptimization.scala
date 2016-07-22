@@ -15,18 +15,19 @@ import lectures.functions.{Computation, CurriedComputation, Data, FunctionalComp
   */
 object EvaluateOptimization extends App with Data {
 
+  var rCount = 100
 
   var startTimestamp = System.currentTimeMillis()
 
   // ВЫПОЛНИТЬ В ЦИКЛЕ  ОТ 1 ДО 100 Computation.computation(
-  for (i <- 1 to 100) {
+  for (i <- 1 to rCount) {
     Computation.computation(filterData, dataArray)
   }
   println("elapsed time in Computation.computation - " + (System.currentTimeMillis() - startTimestamp))
 
   startTimestamp = System.currentTimeMillis()
   // ВЫПОЛНИТЬ В ЦИКЛЕ  ОТ 1 ДО 100 CurriedComputation.partiallyAppliedCurriedFunction(
-  for (i <- 1 to 100) {
+  for (i <- 1 to rCount) {
     CurriedComputation.partiallyAppliedCurriedFunction(dataArray)
   }
   var diff = System.currentTimeMillis() - startTimestamp
@@ -34,7 +35,7 @@ object EvaluateOptimization extends App with Data {
 
   startTimestamp = System.currentTimeMillis()
   // ВЫПОЛНИТЬ В ЦИКЛЕ  ОТ 1 ДО 100 FunctionalComputation.filterApplied
-  for (i <- 1 to 100) {
+  for (i <- 1 to rCount) {
     FunctionalComputation.filterApplied(dataArray)
   }
   val time = System.currentTimeMillis() - startTimestamp
@@ -47,16 +48,14 @@ object EvaluateOptimization extends App with Data {
 
   print(s"Difference is about $diff milliseconds")
 }
+
 /*
 результат
 
-elapsed time in Computation.computation - 11243
-elapsed time - 15105
-elapsed time - 15089
-Difference is about 16 milliseconds
+elapsed time in Computation.computation - 11313
+elapsed time - 10169
+elapsed time - 10168
+Difference is about 1 milliseconds
 
-1 не получилось запустить если CurriedComputation.partiallyAppliedCurriedFunction  и FunctionalComputation.filterApplied объявлены как val
-  что нужно сделать что бы они были инициализированны
-
-2 Насколько я плнимаю результат предпологался другой. Возможно в первом задачии не там расставил sleep. Что нужно поправить?
+Вопрос: Так и должно быть что время каррированной и функциональной версией совпдает?
 */
