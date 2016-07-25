@@ -51,12 +51,8 @@ object ConnectionProducer extends FailUtil {
 case class Connection(resource: Resource) {
   private val defaultResult = "something went wrong!"
 
-  def result(): Option[String] = {
-    val result = ConnectionProducer.result(this)
-    if (result != null)
-      Option(result)
-    else
-      Option(defaultResult)
+  def result(): String = {
+    Option(ConnectionProducer.result(this)) getOrElse defaultResult
   }
 }
 
@@ -65,15 +61,12 @@ case class Resource(name: String)
 object OptionVsNPE extends App {
 
   def businessLogic(maxRetryResourceProduceCount: Int, maxRetryConnectProduceCount: Int): Option[String] = {
-    var result: Option[String] = Option(null)
-
-    tryGetValue(maxRetryResourceProduceCount, GetResourceWithCatchException _)
-      .map(r =>
-        tryGetValue(maxRetryConnectProduceCount, () => ConnectionProducer.produce(r))
-          .map(c =>
-            result = c.result()
-          )
-      )
+    val result =
+      tryGetValue(maxRetryResourceProduceCount, GetResourceWithCatchException _)
+        .flatMap(r =>
+          tryGetValue(maxRetryConnectProduceCount, () => Option(ConnectionProducer.produce(r)))
+            .map(c => c.result())
+        )
 
     println(result)
     result
@@ -83,30 +76,29 @@ object OptionVsNPE extends App {
     businessLogic(10, 100)
   }
 
-  //ни кто не любит бесконечные циклы в коде
-  private def tryGetValue[T](maxRetryCount: Int, f: () => T): Option[T] = {
-    var tryCount = 0
+  //  http://stackoverflow.com/questions/2742719/how-do-i-break-out-of-a-loop-in-scala
+  //  Без break совсем без переменной не получилось
+  private def tryGetValue[T](maxRetryCount: Int, f: () => Option[T]): Option[T] = {
     var result: Option[T] = None
-    while (!result.isDefined && maxRetryCount > tryCount) {
-      result = Option[T](f())
-      tryCount += 1
-    }
+
+    (1 to maxRetryCount).toStream
+      .takeWhile(_ => result.isEmpty)
+      .foreach(_ => result = f())
+
     result
   }
 
-  private def GetResourceWithCatchException: Resource = {
-    var resource: Resource = null
+  private def GetResourceWithCatchException: Option[Resource] = {
     try {
-      resource = ResourceProducer.produce
-      if (resource == null)
-        throw new ResourceException
+      Option(ResourceProducer.produce) match {
+        case r: Some[Resource] => r
+        case _ => throw new ResourceException
+      }
     } catch {
-      // странный конечно код, кидать и тут же ловить exception,
-      // если надо выполнить какую то работу, вполне можно было бы if обойтись
-      // но раз надо
-      case e: ResourceException => println("Try again with new resource")
+      case e:
+        ResourceException => println("Try again with new resource")
+        None
     }
-    resource
   }
 
 
