@@ -20,7 +20,7 @@ package lectures.functions
   *
   *
   */
-object SQLAPI extends App {
+class SQLAPI(resource :String) {
 
   case class Connection(resource: String, opened: Boolean = false) {
 
