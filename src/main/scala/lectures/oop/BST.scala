@@ -1,5 +1,7 @@
 package lectures.oop
 
+import scala.annotation.tailrec
+
 
 /**
   * BSTImpl - это бинарное дерево поиска, содержащее только значения типа Int
@@ -36,12 +38,68 @@ case class BSTImpl(value: Int,
                    left: Option[BSTImpl] = None,
                    right: Option[BSTImpl] = None) extends BST {
 
-  def add(newValue: Int): BST = ???
 
-  def find(value: Int): Option[BST] = ???
+  def add(newValue: Int): BST = addInner(newValue)
 
-  // override def toString() = ???
+  def addInner(newValue: Int): BSTImpl =
+    if (newValue < value)
+      BSTImpl(value, left.map(x => x.addInner(newValue)) orElse Option(BSTImpl(newValue)), right)
+    else if (value < newValue)
+      BSTImpl(value, left, right.map(x => x.addInner(newValue)) orElse Option(BSTImpl(newValue)))
+    else
+      this
 
+
+  def find(value: Int): Option[BST] = findInner(value)
+
+  def findInner(value: Int): Option[BSTImpl] =
+    if (this.value == value)
+      Option(this)
+    else if (this.value < value)
+      this.right.flatMap(x => x.findInner(value))
+    else
+      this.left.flatMap(x => x.findInner(value))
+
+
+  override def toString() = printLineItems(getPrintItems(Option(this), 1, 0))
+
+  //служебный класс для алгоритма печати дерева
+  private case class printItem(value: Int, level: Int, width: Int, shift: Int) {
+  }
+
+  //подготавливаем данные для печати дерева
+  private def getPrintItems(root: Option[BSTImpl], level: Int, shift: Int): List[printItem] =
+    root.map(x => {
+      val leftPrintItems = getPrintItems(x.left, level + 1, shift)
+      val leftWidth = leftPrintItems.headOption.map(y => y.width).getOrElse(0)
+      val rightPrintItems = getPrintItems(x.right, level + 1, shift + leftWidth + getNumWidth(x.value))
+      val width = leftWidth + rightPrintItems.headOption.map(y => y.width).getOrElse(0) + getNumWidth(x.value)
+      val e = new printItem(x.value, level, width, shift + leftWidth)
+      e :: (leftPrintItems ++ rightPrintItems)
+    }).getOrElse(List[printItem]())
+
+  //печать дерева поуровнева
+  private def printLineItems(list: List[printItem]): String =
+    if (list.isEmpty)
+      "list is empty\n"
+    else
+      (1 to list.maxBy(x => x.level).level)
+        .map(l =>
+          printOneLevelItems("", list.filter(x => x.level == l).sortBy(x => x.shift), 0)
+        ).foldLeft("")((a, s) => a + s)
+
+  //печать отдельного уровня
+  @tailrec private def printOneLevelItems(acc: String, list: List[printItem], skip: Int): String =
+    if (list.isEmpty) {
+      acc + "\n"
+    } else {
+      val placeholderCount = list.head.shift - skip
+      val str = acc + " " * placeholderCount + list.head.value
+      printOneLevelItems(str, list.tail, skip + placeholderCount + getNumWidth(list.head.value))
+    }
+  
+  //сколько символов занимает число
+  private def getNumWidth(v: Int): Int = v.toString.length
 }
 
 object TreeTest extends App {
@@ -50,21 +108,46 @@ object TreeTest extends App {
   val maxValue = 110000
   val nodesCount = sc.nextInt()
 
-  val markerItem = (Math.random() * maxValue).toInt
-  val markerItem2 = (Math.random() * maxValue).toInt
-  val markerItem3 = (Math.random() * maxValue).toInt
+  if (nodesCount <= 0)
+    throw new IllegalArgumentException("count must be greater than zero")
+
+  def rnd(): Int = (Math.random() * maxValue).toInt
+
+  val markerItem = rnd()
+  val markerItem2 = rnd()
+  val markerItem3 = rnd()
+
+  //генератор узлов
+  //добавляет в существующие дерево сount узлов
+  @tailrec def genTree(count: Int, node: BST): BST =
+    if (count == 0)
+      node
+    else
+      genTree(count - 1, node.add(rnd()))
 
   // Generate huge tree
   val root: BST = BSTImpl(maxValue / 2)
-  val tree: BST = ??? // generator goes here
+  val tree: BST = genTree(nodesCount, root)
 
   // add marker items
   val testTree = tree.add(markerItem).add(markerItem2).add(markerItem3)
 
   // check that search is correct
   require(testTree.find(markerItem).isDefined)
-  require(testTree.find(markerItem).isDefined)
-  require(testTree.find(markerItem).isDefined)
+  require(testTree.find(markerItem2).isDefined)
+  require(testTree.find(markerItem3).isDefined)
 
   println(testTree)
+
+
+  /*
+    пример из презентации
+    var t = BSTImpl(100).add(15).add(3).add(13).add(91).add(17).add(190).add(171).add(155).add(205).add(303)
+    println(t)
+
+           100
+     15             190
+  3      91      171   205
+   13  17     155         303
+  */
 }
