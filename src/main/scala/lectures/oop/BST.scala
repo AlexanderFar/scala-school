@@ -32,6 +32,11 @@ trait BST {
   def add(newValue: Int): BST
 
   def find(value: Int): Option[BST]
+
+  def breadthTraverseSearch(value: Int): Option[BST]
+
+  //т.к. нет договорённости о порядке обхода дерева, f должна быть ассоциативна
+  def fold(aggregator: Int)(f: (Int, Int) => (Int)):Int
 }
 
 case class BSTImpl(value: Int,
@@ -59,6 +64,40 @@ case class BSTImpl(value: Int,
       this.right.flatMap(x => x.findInner(value))
     else
       this.left.flatMap(x => x.findInner(value))
+
+
+  def breadthTraverseSearch(value: Int): Option[BST] = breadthTraverseSearchBase(x => x.value == value)
+
+  def breadthTraverseSearchBase(predicate: BST => Boolean): Option[BST] = breadthTraverseProcces(List(Option(this)), predicate).headOption.getOrElse(None)
+
+  @tailrec private def breadthTraverseProcces(list: List[Option[BST]], predicate: BST => Boolean): List[Option[BST]] = {
+    if (list.isEmpty)
+      list
+    else {
+      var target: Option[BST] = None
+      val nextLevel = list.withFilter(_ => target.isEmpty)
+        .map(node =>
+          node.map(x => {
+            if (predicate(x))
+              target = Option(x)
+            List(x.left, x.right)
+          })
+        )
+      if (target.nonEmpty)
+        List(target)
+      else
+        breadthTraverseProcces(nextLevel.flatten.flatten, predicate)
+    }
+  }
+
+  //т.к. нет договорённости о порядке обхода дерева, f должна быть ассоциативна
+  def fold(aggregator: Int)(f: (Int, Int) => (Int)) = foldInner(this, aggregator, f)
+
+  def foldInner(node: BSTImpl, acc: Int, f: (Int, Int) => Int): Int = {
+    val left = node.left.map(x => foldInner(x, acc, f)).getOrElse(acc)
+    val right = node.right.map(x => foldInner(x, left, f)).getOrElse(left)
+    f(right, node.value)
+  }
 
 
   override def toString() = printLineItems(getPrintItems(Option(this), 1, 0))
@@ -97,7 +136,7 @@ case class BSTImpl(value: Int,
       val str = acc + " " * placeholderCount + list.head.value
       printOneLevelItems(str, list.tail, skip + placeholderCount + getNumWidth(list.head.value))
     }
-  
+
   //сколько символов занимает число
   private def getNumWidth(v: Int): Int = v.toString.length
 }
@@ -137,8 +176,11 @@ object TreeTest extends App {
   require(testTree.find(markerItem2).isDefined)
   require(testTree.find(markerItem3).isDefined)
 
-  println(testTree)
+  require(testTree.breadthTraverseSearch(markerItem).isDefined)
+  require(testTree.breadthTraverseSearch(markerItem2).isDefined)
+  require(testTree.breadthTraverseSearch(markerItem3).isDefined)
 
+  println(testTree)
 
   /*
     пример из презентации
@@ -150,4 +192,12 @@ object TreeTest extends App {
   3      91      171   205
    13  17     155         303
   */
+
+  var t = BSTImpl(3).add(2).add(4)
+  require(t.fold(0)((a, b) => a + b) == 9)
+  require(t.fold(0)((a, b) => a * b) == 0)
+  require(t.fold(1)((a, b) => a * b) == 24)
+  require(t.fold(10)((a, b) => a + b) == 19)
+  require(t.fold(10)((a, b) => a * b) == 240)
+
 }
