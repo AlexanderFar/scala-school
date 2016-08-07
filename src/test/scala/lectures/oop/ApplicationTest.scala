@@ -1,22 +1,22 @@
 package lectures.oop
 
-import org.scalatest.WordSpec
+import org.scalatest.{Matchers, WordSpec}
 
 /**
   * Раскомментруйте и допишите тесты на
   * класс lectures.oop.Application
   */
-class ApplicationTest extends WordSpec {
+class ApplicationTest extends WordSpec with Matchers  {
 
   private val started = new AfterWord("started")
 
   "Application" should {
     "return correct answer" when started{
       "in a test environment" in {
-        //??? shouldBe 8
+        new Application(true).doTheJob shouldBe 8
       }
       "in a production environment" in {
-      //   ??? shouldBe 3
+        new Application(false).doTheJob shouldBe 3
       }
     }
   }

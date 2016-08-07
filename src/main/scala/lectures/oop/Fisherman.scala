@@ -21,33 +21,38 @@ package lectures.oop
   * * * * так можно PartD { def str = { val newStr = doSomethingWithD("D"); newStr }}
   * * * * содержимое FishermansApp менять нельзя
   **/
-//??? PartD {
-//  ??? str = "D"
-//}
-//
-//??? PartY {
-//  ??? str = "Y"
-//}
-//
-//??? PartCH {
-//  ??? str = "CH"
-//}
-//
-//??? PartK {
-//  ??? str = "K"
-//}
-//
-//??? PartA {
-//  ??? str = "A"
-//}
-//
-//??? PartO extends PartA {
-//  ??? str = "O"
-//}
-//
-//object FishermansApp extends App {
-//  val o = new PartO
-//  println(o.str)
-//}
+trait PartD extends PartY{
+  override def str = super.str + "D"
+}
 
+trait PartY {
+  def str = "Y"
+}
 
+class PartCH {
+  val str = "CH"
+}
+
+class PartK extends PartCH{
+  override val str = super.str + "K"
+}
+
+class PartA extends PartK{
+  protected val endPart = super.str + "A"
+  override val str = endPart
+}
+
+class PartO extends PartA with PartD  {
+  override val str = super.str +  "O" + endPart
+}
+
+object FishermansApp extends App {
+  val o = new PartO
+  println(o.str)
+}
+
+/*
+* Вопрос:
+*
+* почему если написать у PartD объявить str как val вместо def, то в наследнике она null?
+* */
